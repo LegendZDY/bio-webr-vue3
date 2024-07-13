@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+import WebRTest from './components/WebRTest.vue'
 </script>
 
 <template>
@@ -11,7 +11,9 @@ import HelloWorld from './components/HelloWorld.vue'
       <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
     </a>
   </div>
-  <HelloWorld msg="Vite + Vue" />
+  <div id="app">
+    <WebRTest />
+  </div>
 </template>
 
 <style scoped>
@@ -28,3 +30,4 @@ import HelloWorld from './components/HelloWorld.vue'
   filter: drop-shadow(0 0 2em #42b883aa);
 }
 </style>
+./components/WebRTest.vue
