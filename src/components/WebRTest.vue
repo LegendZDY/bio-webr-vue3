@@ -20,12 +20,10 @@ export default {
         btn.disabled = false;
     },
     data(): {
-        input: string,
         output: string,
         hasPlot: Boolean
     } {
         return {
-            input: "",
             output: '',
             hasPlot: false,
         };
@@ -46,14 +44,16 @@ export default {
                     env: this.webR.objs.globalEnv,
                 });
                 await this.webR.evalRVoid('dev.off()');
+                console.log(result);
 
                 // Get captured output
                 this.output = result.output.filter(
                     (msg) => (msg as Message).type == 'stdout' || (msg as Message).type == 'stderr'
                 ).map((msg) => (msg as Message).data).join('\n');
-
+                
                 // Render plot to HTML canvas element
                 const msgs = await this.webR.flush();
+                console.log(msgs);
                 this.hasPlot = false;
                 msgs.forEach((msg) => {
                     if (msg.type === 'canvas' && msg.data.event === 'canvasImage') {
