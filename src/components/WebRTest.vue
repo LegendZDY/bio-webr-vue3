@@ -37,20 +37,14 @@ export default {
                 // Run user provided code
                 await this.webR.init();
                 await this.webR.evalRVoid('webr::canvas(width=500, height=400)');
-                const result = await this.codeShelter.captureR("hist(rnorm(10000))", {
-                    withAutoprint: true,
-                    captureStreams: true,
-                    captureConditions: false,
-                    env: this.webR.objs.globalEnv,
-                });
-                await this.webR.evalRVoid('dev.off()');
-                console.log(result);
 
                 // Get captured output
-                this.output = result.output.filter(
-                    (msg) => (msg as Message).type == 'stdout' || (msg as Message).type == 'stderr'
-                ).map((msg) => (msg as Message).data).join('\n');
-                
+                await this.webR.evalRVoid(`
+                plot(rnorm(1000), rnorm(1000),
+                    xlab="x axis label", ylab="y axis label",
+                    main="An rnorm plot")
+                dev.off()
+                `);
                 // Render plot to HTML canvas element
                 const msgs = await this.webR.flush();
                 console.log(msgs);
