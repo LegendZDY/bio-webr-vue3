@@ -152,7 +152,10 @@ export default {
                 await this.webR.objs.globalEnv.bind('ylabel', this.form.ylabel);
                 await this.webR.objs.globalEnv.bind('title', this.form.title);
                 await this.webR.objs.globalEnv.bind('color', this.form.color);
-                
+
+                // await this.webR.installPackages(['ggplot2'])
+                const obj = await this.webR.evalR('.libPaths()');
+                console.log(obj);
 
                 // Get captured output
                 await this.webR.evalRVoid(`
