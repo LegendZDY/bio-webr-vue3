@@ -91,7 +91,9 @@
 
 <script lang="ts">
 
-import type { Shelter, WebR } from 'webr';
+import type { Shelter, WebR, FSMountOptions } from 'webr';
+
+import ObsClient from 'esdk-obs-nodejs';
 
 declare module '@vue/runtime-core' {
   interface ComponentCustomProperties {
@@ -104,6 +106,20 @@ export default {
     mounted: async function () {
         await this.webR.init();
         this.codeShelter = await new this.webR.Shelter();
+
+        // Create mountpoint
+        await this.webR.FS.mkdir('/packages')
+        // Download image data
+        const data = await fetch('https://geneworkflows-cn-north-4-064da7eea8800fb40ff8c014225ba5c0.obs.cn-north-4.myhuaweicloud.com:443/test/legendzdy_ggplot2.data?AccessKeyId=OEPGFZQJKMCEAFMDVQE1&Expires=1721290903&Signature=xIqWxRLNVdbC6mb4QZFBW/Hwg7k%3D')
+        const metadata = await fetch('https://geneworkflows-cn-north-4-064da7eea8800fb40ff8c014225ba5c0.obs.cn-north-4.myhuaweicloud.com:443/test/legendzdy_ggplot2.js.metadata?AccessKeyId=OEPGFZQJKMCEAFMDVQE1&Expires=1721290844&Signature=9xfkXI5AosxAuuzRradTc9dsFCY%3D')
+        // Mount image data
+        const options: FSMountOptions = {
+        packages: [{
+            blob: await data.blob(),
+            metadata: await metadata.json(),
+        }],
+        }
+        await this.webR.FS.mount("WORKERFS", options, '/packages');
 
         const btnText = this.$refs.webrEditorButtonTitle as HTMLSpanElement;
         const btn = this.$refs.webrEditorButton as HTMLButtonElement;
@@ -145,20 +161,18 @@ export default {
             // btn.disabled = true;
             try {
                 // Run user provided code
-                await this.webR.init();
+                // await this.webR.init();
                 await this.webR.evalRVoid('webr::canvas(width=500, height=400)');
                 await this.webR.objs.globalEnv.bind('input', this.form.input);
                 await this.webR.objs.globalEnv.bind('xlabel', this.form.xlabel);
                 await this.webR.objs.globalEnv.bind('ylabel', this.form.ylabel);
                 await this.webR.objs.globalEnv.bind('title', this.form.title);
                 await this.webR.objs.globalEnv.bind('color', this.form.color);
-
-                // await this.webR.installPackages(['ggplot2'])
-                const obj = await this.webR.evalR('.libPaths()');
-                console.log(obj);
+                // await this.webR.evalRVoid("print(head(read.csv('/data/iris.csv')))")
 
                 // Get captured output
                 await this.webR.evalRVoid(`
+                
                 plot(rnorm(input), rnorm(input),
                     xlab=xlabel, ylab=ylabel,
                     main=title,
