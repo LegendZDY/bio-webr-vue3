@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import WebRTest from './components/WebRTest.vue'
+import WebRTestIndexedDB from './components/WebRTestIndexedDB.vue'
 </script>
 
 <template>
-  <div id="app">
+  <!-- <div id="app">
     <WebRTest />
+  </div> -->
+  <div id="app">
+    <WebRTestIndexedDB />
   </div>
 </template>
 

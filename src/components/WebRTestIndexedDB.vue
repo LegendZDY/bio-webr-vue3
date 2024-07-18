@@ -91,34 +91,44 @@
 
 <script lang="ts">
 
-import type { Shelter, WebR, FSMountOptions } from 'webr';
+import { WebR, ChannelType } from 'webr';
+import type { Shelter } from 'webr';
 
 declare module '@vue/runtime-core' {
   interface ComponentCustomProperties {
-    webR: WebR;
     codeShelter: Shelter;
   }
 }
 
 export default {
     mounted: async function () {
+        this.webR = new WebR({
+            channelType: ChannelType.PostMessage,
+            });
         await this.webR.init();
         this.codeShelter = await new this.webR.Shelter();
 
-        // Create mountpoint
-        await this.webR.FS.mkdir('/packages')
-        // Download image data
-        const data = await fetch('https://geneworkflows-cn-north-4-064da7eea8800fb40ff8c014225ba5c0.obs.cn-north-4.myhuaweicloud.com:443/test/legendzdy_ggplot2.data?AccessKeyId=OEPGFZQJKMCEAFMDVQE1&Expires=1721290903&Signature=xIqWxRLNVdbC6mb4QZFBW/Hwg7k%3D')
-        const metadata = await fetch('https://geneworkflows-cn-north-4-064da7eea8800fb40ff8c014225ba5c0.obs.cn-north-4.myhuaweicloud.com:443/test/legendzdy_ggplot2.js.metadata?AccessKeyId=OEPGFZQJKMCEAFMDVQE1&Expires=1721290844&Signature=9xfkXI5AosxAuuzRradTc9dsFCY%3D')
-        // Mount image data
-        const options: FSMountOptions = {
-        packages: [{
-            blob: await data.blob(),
-            metadata: await metadata.json(),
-        }],
-        }
-        await this.webR.FS.mount("WORKERFS", options, '/packages');
+        // Create a `/data` directory for IDBFS and mount it
+        await this.webR.FS.mkdir('/data');
+        await this.webR.FS.mount('IDBFS', {}, '/data');
 
+        // Populate the `/data` directory from IndexedDB. The first time, this will be empty
+        await this.webR.FS.syncfs(true);
+        
+        try {
+            await this.webR.evalR('dir.exists("/data/library")');
+            console.log('ggplot2 already installed!');
+        } catch (error) {
+            console.log('ggplot2 not installed, installing now...');
+            // Install R packages to `/data/library`
+            // NOTE: The `mount = FALSE` argument is very important here
+            await this.webR.evalRVoid("webr::install('ggplot2', lib = '/data/library', mount = FALSE)")
+
+            // Synchronise to write the packages' file data to IndexedDB
+            await this.webR.FS.syncfs(false);
+            console.log('ggplot2 installed!');
+        }
+        await this.webR.evalR('.libPaths(c("/data/library", .libPaths()))');
         const btnText = this.$refs.webrEditorButtonTitle as HTMLSpanElement;
         const btn = this.$refs.webrEditorButton as HTMLButtonElement;
         btnText.innerText = "Run Code";
@@ -170,13 +180,13 @@ export default {
 
                 // Get captured output
                 await this.webR.evalRVoid(`
+                library(ggplot2)
+                data(iris)
+                ggplot(data = iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
+                    geom_point() +
+                    labs(title = title, x = xlabel, y = ylabel) +
+                    theme(plot.title = element_text(size = 15, color = color))
                 
-                plot(rnorm(input), rnorm(input),
-                    xlab=xlabel, ylab=ylabel,
-                    main=title,
-                    col = color, # 设置点的颜色为蓝色
-                    cex.main = 1.5, # 设置标题字体大小为1.5倍默认大小
-                    cex.lab = 1.2)
                 dev.off()
                 `, {
                     withAutoprint: true,
