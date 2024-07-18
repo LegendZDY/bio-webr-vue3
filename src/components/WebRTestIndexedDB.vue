@@ -114,9 +114,10 @@ export default {
 
         // Populate the `/data` directory from IndexedDB. The first time, this will be empty
         await this.webR.FS.syncfs(true);
+        await this.webR.evalR('.libPaths(c("/data/library", .libPaths()))');
         
         try {
-            await this.webR.evalR('dir.exists("/data/library")');
+            await this.webR.evalR('library("ggplot2")');
             console.log('ggplot2 already installed!');
         } catch (error) {
             console.log('ggplot2 not installed, installing now...');
@@ -127,8 +128,8 @@ export default {
             // Synchronise to write the packages' file data to IndexedDB
             await this.webR.FS.syncfs(false);
             console.log('ggplot2 installed!');
+            await this.webR.evalR('library("ggplot2")');
         }
-        await this.webR.evalR('.libPaths(c("/data/library", .libPaths()))');
         const btnText = this.$refs.webrEditorButtonTitle as HTMLSpanElement;
         const btn = this.$refs.webrEditorButton as HTMLButtonElement;
         btnText.innerText = "Run Code";
@@ -176,18 +177,16 @@ export default {
                 await this.webR.objs.globalEnv.bind('ylabel', this.form.ylabel);
                 await this.webR.objs.globalEnv.bind('title', this.form.title);
                 await this.webR.objs.globalEnv.bind('color', this.form.color);
-                // await this.webR.evalRVoid("print(head(read.csv('/data/iris.csv')))")
 
                 // Get captured output
                 await this.webR.evalRVoid(`
-                library(ggplot2)
                 data(iris)
                 ggplot(data = iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
                     geom_point() +
                     labs(title = title, x = xlabel, y = ylabel) +
                     theme(plot.title = element_text(size = 15, color = color))
                 
-                dev.off()
+                graphics.off()
                 `, {
                     withAutoprint: true,
                     captureStreams: true,
