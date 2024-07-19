@@ -90,48 +90,118 @@
 </template>
 
 <script setup lang="ts">
-
 import { WebR, Shelter, ChannelType } from 'webr';
+import { ref, onMounted, reactive } from 'vue';
 
-import { ref, onMounted, } from 'vue'
+let webR; // 声明为模块级变量
 
-const webR = new WebR({
-    channelType: ChannelType.PostMessage,
-    });
-const webrEditorButtonTitle = ref();
+const initWebR = async () => {
+    console.log('开始初始化');
 
- // 生命周期钩子
- onMounted(async ()=>{
-    console.log('开始初始化')
+    const webR = new WebR({
+        channelType: ChannelType.PostMessage,
+        });
     await webR.init();
-    // const codeShelter = await new webR.Shelter();
+
     await webR.FS.mkdir('/data');
     await webR.FS.mount('IDBFS', {}, '/data');
 
     // Populate the `/data` directory from IndexedDB. The first time, this will be empty
     await webR.FS.syncfs(true);
     await webR.evalR('.libPaths(c("/data/library", .libPaths()))');
-    
+
     try {
         await webR.evalR('library("ggplot2")');
         console.log('ggplot2 already installed!');
     } catch (error) {
         console.log('ggplot2 not installed, installing now...');
-        // Install R packages to `/data/library`
-        // NOTE: The `mount = FALSE` argument is very important here
-        await webR.evalRVoid("webr::install('ggplot2', lib = '/data/library', mount = FALSE)")
-
-        // Synchronise to write the packages' file data to IndexedDB
+        await webR.evalRVoid("webr::install('ggplot2', lib = '/data/library', mount = FALSE)");
         await webR.FS.syncfs(false);
         console.log('ggplot2 installed!');
-        await webR.evalR('library("ggplot2")');
     }
-    const btnText = webrEditorButtonTitle.value as HTMLSpanElement;
-    btnText.innerText = "Run Code";
-    console.log('初始化完成')
-})
 
+    console.log('初始化完成');
+};
 
+const hasPlot = ref(false);
+const form = reactive({
+    input: 10,
+    color: '#409eff',
+    fontsize: 14,
+    xlabel: 'X-axis label',
+    ylabel: 'Y-axis label',
+    title: 'Title',
+    date1: '',
+    date2: '',
+    delivery: false,
+    type: ['Online activities', 'Promotion activities'],
+    resource: 'Sponsor',
+    desc: 'This is a sample activity form.'
+});
+
+const run = async () => {
+    const codeShelter = await new Shelter();
+    const input = form.value.input;
+    const color = form.value.color;
+    const fontsize = form.value.fontsize;
+    const xlabel = form.value.xlabel;
+    const ylabel = form.value.ylabel;
+    const title = form.value.title;
+    const date1 = form.value.date1;
+    const date2 = form.value.date2;
+    const delivery = form.value.delivery;
+    const type = form.value.type;
+    const resource = form.value.resource;
+    const desc = form.value.desc;
+
+    const btn = $refs.webrEditorButton as HTMLButtonElement;
+    const canvas = $refs.webrPlotOutput as HTMLCanvasElement;
+    // btn.disabled = true;
+    try {
+        // Run user provided code
+        // await webR.init();
+        await webR.evalRVoid('webr::canvas(width=500, height=400)');
+        await webR.objs.globalEnv.bind('input', input);
+        await webR.objs.globalEnv.bind('xlabel', xlabel);
+        await webR.objs.globalEnv.bind('ylabel', ylabel);
+        await webR.objs.globalEnv.bind('title', title);
+        await webR.objs.globalEnv.bind('color', color);
+
+        // Get captured output
+        await webR.evalRVoid(`
+        library("ggplot2")
+        data(iris)
+        ggplot(data = iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
+            geom_point() +
+            labs(title = title, x = xlabel, y = ylabel) +
+            theme(plot.title = element_text(size = 15, color = color))
+        
+        graphics.off()
+        `, {
+            withAutoprint: true,
+            captureStreams: true,
+            captureConditions: false,
+            env: webR.objs.globalEnv,
+        });
+        // Render plot to HTML canvas element
+        const msgs = await webR.flush();
+        hasPlot = false;
+        msgs.forEach((msg) => {
+            if (msg.type === 'canvas' && msg.data.event === 'canvasImage') {
+                hasPlot = true;
+                canvas.getContext('2d')!.drawImage(msg.data.image, 0, 0);
+            } else if (msg.type === 'canvas' && msg.data.event === 'canvasNewPage') {
+                canvas.getContext('2d')!.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        });
+    } finally {
+        // Destroy sheltered R objects
+        codeShelter.purge();
+        btn.disabled = false;
+    }
+}
+
+onMounted(initWebR);
 </script>
 
 <style scoped>
