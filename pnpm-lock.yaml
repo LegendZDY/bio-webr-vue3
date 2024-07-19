@@ -14,6 +14,9 @@ dependencies:
   element-plus:
     specifier: ^2.7.7
     version: 2.7.7(vue@3.4.32)
+  evol-colorpicker:
+    specifier: ^3.4.3
+    version: 3.4.3
   vue:
     specifier: ^3.4.29
     version: 3.4.32(typescript@5.5.3)
@@ -1240,6 +1243,13 @@ packages:
   /estree-walker@2.0.2:
     resolution: {integrity: sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w==}
 
+  /evol-colorpicker@3.4.3:
+    resolution: {integrity: sha512-Axwrlzq+NRAMfn+p9k4J6kpoKW5nkMdesjXAM5fTK+QRK/Ru0Ug29KQX0JigAuTb/YBZ3A/dx8yySjKt5BNrgw==}
+    dependencies:
+      jquery: 3.6.4
+      jquery-ui: 1.12.1
+    dev: false
+
   /fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -1293,6 +1303,14 @@ packages:
 
   /isarray@1.0.0:
     resolution: {integrity: sha512-VLghIWNM6ELQzo7zwmcg0NmTVyWKYjvIeM83yjp0wRDTmUnrM678fQbcKBo6n2CJEF0szoG//ytg+TKla89ALQ==}
+    dev: false
+
+  /jquery-ui@1.12.1:
+    resolution: {integrity: sha512-K/kDBMXkTky5LH+gqbMvttU1ipqCTaecKyAFjwHjUnPTVfm5I5PZC7We31iNR3yWtAHNqoxkLoit06lR/gKVlA==}
+    dev: false
+
+  /jquery@3.6.4:
+    resolution: {integrity: sha512-v28EW9DWDFpzcD9O5iyJXg3R3+q+mET5JhnjJzQUZMHOv67bpSIHq81GEYpPNZHG+XXHsfSme3nxp/hndKEcsQ==}
     dev: false
 
   /js-tokens@4.0.0:

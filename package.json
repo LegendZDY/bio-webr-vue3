@@ -12,6 +12,7 @@
     "@vitejs/plugin-vue-jsx": "^4.0.0",
     "@vue/runtime-core": "^3.4.32",
     "element-plus": "^2.7.7",
+    "evol-colorpicker": "^3.4.3",
     "vue": "^3.4.29",
     "vue3-ace-editor": "^2.2.4",
     "webr": "^0.4.0"
